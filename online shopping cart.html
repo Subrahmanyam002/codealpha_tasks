@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subbu Online Cart • E-commerce</title>
+   
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+   
+    <!-- GSAP for dynamic animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+   
+    <!-- Google Model Viewer for 3D -->
+    <script src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js" type="module"></script>
+   
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+   
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+       
+        body {
+            font-family: 'Inter', system_ui, sans-serif;
+        }
+       
+        .product-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+       
+        .product-card:hover {
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15);
+        }
+       
+        .modal {
+            animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+       
+        @keyframes modalPop {
+            0% { opacity: 0; transform: scale(0.95) translateY(20px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+       
+        model-viewer {
+            width: 100%;
+            height: 100%;
+            background: #111827;
+            border-radius: 16px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- NAVBAR -->
+    <nav class="bg-white border-b sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl">🛒</div>
+                <h1 class="text-3xl font-bold tracking-tight">Subbu Online Cart</h1>
+            </div>
+            <div class="flex items-center gap-8 text-lg">
+                <a onclick="navigateTo('home')" class="cursor-pointer hover:text-purple-600 font-medium flex items-center gap-1">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                <a onclick="navigateTo('shop')" class="cursor-pointer hover:text-purple-600 font-medium flex items-center gap-1">
+                    <i class="fas fa-store"></i> Shop
+                </a>
+                <a onclick="navigateTo('cart')" class="cursor-pointer hover:text-purple-600 font-medium flex items-center gap-1 relative" id="cart-link">
+                    <i class="fas fa-shopping-cart"></i> Cart
+                    <span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">0</span>
+                </a>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="user-section" onclick="showProfile()" class="flex items-center gap-2 cursor-pointer">
+                    <i class="fas fa-user-circle text-3xl text-gray-700"></i>
+                    <span id="username-display" class="font-semibold hidden"></span>
+                </div>
+               
+                <button onclick="logout()" id="logout-btn"
+                        class="hidden px-6 py-2 bg-red-100 text-red-600 rounded-2xl font-semibold hover:bg-red-200 transition">
+                    Logout
+                </button>
+               
+                <button onclick="showAuthModal()" id="login-btn"
+                        class="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl font-semibold hover:shadow-lg transition">
+                    Login / Register
+                </button>
+            </div>
+        </div>
+    </nav>
+    <!-- HERO SECTION -->
+    <section id="home-section" class="max-w-7xl mx-auto px-6 pt-16 pb-20">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+                <h1 id="hero-title" class="text-7xl font-bold leading-none tracking-tighter">Premium Products.<br>Real 3D Experience.</h1>
+                <p class="mt-6 text-2xl text-gray-600">Shop the future with interactive 3D models, smooth animations &amp; instant cart.</p>
+               
+                <div class="mt-10 flex gap-4">
+                    <button onclick="navigateTo('shop')"
+                            class="px-8 py-5 bg-black text-white rounded-3xl text-xl font-semibold flex items-center gap-3 hover:scale-105 transition">
+                        Start Shopping <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button onclick="navigateTo('shop')"
+                            class="px-8 py-5 border-2 border-black rounded-3xl text-xl font-semibold flex items-center gap-3 hover:bg-gray-100 transition">
+                        Browse All
+                    </button>
+                </div>
+               
+                <div class="mt-12 flex items-center gap-8 text-sm">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-check-circle text-green-500 text-2xl"></i>
+                        <div>
+                            <p class="font-semibold">Free Delivery</p>
+                            <p class="text-gray-500">On orders above ₹999</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-check-circle text-green-500 text-2xl"></i>
+                        <div>
+                            <p class="font-semibold">30-Day Return</p>
+                            <p class="text-gray-500">Hassle free</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+           
+            <!-- Hero 3D Preview -->
+            <div class="hidden md:block bg-gradient-to-br from-purple-100 to-pink-100 rounded-3xl p-8 h-[500px] relative">
+                <model-viewer id="hero-3d" src="https://modelviewer.dev/assets/ShopifyModels/RobotExpressive.glb"
+                              auto-rotate camera-controls shadow-intensity="1"
+                              style="width:100%; height:100%;"></model-viewer>
+                <div class="absolute bottom-8 left-8 bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl shadow-xl">
+                    <p class="font-bold text-xl">Robot Companion</p>
+                    <p class="text-purple-600">₹12,999 • Interactive 3D</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- SHOP SECTION -->
+    <section id="shop-section" class="max-w-7xl mx-auto px-6 py-12 hidden">
+        <h2 class="text-5xl font-bold text-center mb-12">Featured Products <span class="text-purple-600">(8 items)</span></h2>
+       
+        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <!-- Populated by JavaScript -->
+        </div>
+    </section>
+    <!-- PRODUCT DETAIL MODAL -->
+    <div id="product-modal" onclick="if(event.target===this) hideModal()"
+         class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[100]">
+        <div onclick="event.stopImmediatePropagation()"
+             class="modal bg-white max-w-5xl w-full mx-4 rounded-3xl overflow-hidden">
+            <div class="grid md:grid-cols-2">
+                <!-- 3D Viewer -->
+                <div class="bg-gray-900 p-8 flex items-center justify-center min-h-[500px]">
+                    <model-viewer id="detail-3d"
+                                  auto-rotate
+                                  camera-controls
+                                  shadow-intensity="1"
+                                  style="width: 100%; height: 480px;">
+                    </model-viewer>
+                </div>
+               
+                <!-- Details -->
+                <div class="p-10">
+                    <button onclick="hideModal()" class="float-right text-3xl text-gray-400 hover:text-gray-600">×</button>
+                    <h1 id="modal-name" class="text-5xl font-bold"></h1>
+                    <p id="modal-price" class="text-4xl text-green-600 font-semibold mt-3"></p>
+                   
+                    <p id="modal-desc" class="mt-8 text-gray-600 leading-relaxed text-lg"></p>
+                   
+                    <div class="mt-12">
+                        <button onclick="addCurrentToCart()"
+                                class="w-full py-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-2xl font-bold rounded-3xl hover:scale-105 transition flex items-center justify-center gap-3">
+                            <i class="fas fa-shopping-cart"></i>
+                            ADD TO CART
+                        </button>
+                    </div>
+                   
+                    <div class="mt-8 text-sm flex items-center gap-8 text-gray-500">
+                        <div>✅ In stock</div>
+                        <div>🚚 Ships in 2 days</div>
+                        <div>🔄 3D View • 360°</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- CART SECTION -->
+    <section id="cart-section" class="max-w-7xl mx-auto px-6 py-12 hidden">
+        <h2 class="text-5xl font-bold mb-8">Your Cart</h2>
+       
+        <div class="grid md:grid-cols-12 gap-8">
+            <!-- Cart Items -->
+            <div class="md:col-span-8">
+                <div id="cart-items" class="space-y-6">
+                    <!-- Populated by JS -->
+                </div>
+               
+                <div id="cart-empty" class="hidden text-center py-20">
+                    <i class="fas fa-shopping-cart text-8xl text-gray-200 mb-6"></i>
+                    <p class="text-3xl font-medium text-gray-400">Your cart is empty</p>
+                    <button onclick="navigateTo('shop')" class="mt-6 text-purple-600 font-semibold">Browse products →</button>
+                </div>
+            </div>
+           
+            <!-- Order Summary -->
+            <div class="md:col-span-4">
+                <div class="bg-white rounded-3xl p-8 sticky top-8 shadow-xl">
+                    <h3 class="text-2xl font-semibold mb-6">Order Summary</h3>
+                   
+                    <div class="flex justify-between text-lg mb-2">
+                        <span>Subtotal</span>
+                        <span id="cart-subtotal">₹0</span>
+                    </div>
+                    <div class="flex justify-between text-lg mb-2">
+                        <span>Shipping</span>
+                        <span class="text-green-500">FREE</span>
+                    </div>
+                    <hr class="my-6">
+                    <div class="flex justify-between text-2xl font-bold">
+                        <span>Total</span>
+                        <span id="cart-total">₹0</span>
+                    </div>
+                   
+                    <button onclick="proceedToCheckout()"
+                            class="mt-8 w-full py-6 text-2xl font-bold bg-black text-white rounded-3xl hover:bg-gray-800 transition">
+                        PROCEED TO CHECKOUT
+                    </button>
+                   
+                    <p class="text-center text-xs text-gray-400 mt-6">🔒 Secure checkout • Powered by Subbu Online Cart</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- CHECKOUT SUCCESS MODAL -->
+    <div id="success-modal" onclick="if(event.target===this) hideSuccessModal()"
+         class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[200]">
+        <div class="modal bg-white w-full max-w-md mx-4 rounded-3xl p-10 text-center">
+            <i class="fas fa-check-circle text-8xl text-green-500 mx-auto mb-6"></i>
+            <h2 class="text-4xl font-bold">Order Placed Successfully! 🎉</h2>
+            <p id="order-id" class="mt-4 text-gray-600"></p>
+            <p class="text-sm text-gray-500 mt-8">Thank you for shopping with <strong>Subbu Online Cart</strong>.<br>Your 3D products are on the way!</p>
+           
+            <button onclick="hideSuccessModal(); navigateTo('home')"
+                    class="mt-10 w-full py-6 bg-green-500 text-white text-xl font-bold rounded-3xl">
+                Back to Shop
+            </button>
+        </div>
+    </div>
+    <!-- AUTH MODAL (Login / Register) -->
+    <div id="auth-modal" onclick="if(event.target===this) hideAuthModal()"
+         class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[150]">
+        <div onclick="event.stopImmediatePropagation()"
+             class="modal bg-white w-full max-w-md mx-4 rounded-3xl p-8">
+           
+            <div class="flex justify-between mb-6">
+                <h3 id="auth-title" class="text-3xl font-bold">Login</h3>
+                <button onclick="hideAuthModal()" class="text-4xl text-gray-300">×</button>
+            </div>
+           
+            <div id="auth-form">
+                <input id="auth-name" type="text" placeholder="Full Name (Register only)"
+                       class="w-full px-6 py-4 border rounded-2xl mb-4 hidden">
+               
+                <input id="auth-email" type="email" placeholder="Email / Username"
+                       class="w-full px-6 py-4 border rounded-2xl mb-4">
+               
+                <input id="auth-password" type="password" placeholder="Password"
+                       class="w-full px-6 py-4 border rounded-2xl mb-6">
+               
+                <button onclick="handleAuth()"
+                        id="auth-submit-btn"
+                        class="w-full py-5 text-xl font-semibold bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-3xl">
+                    Login
+                </button>
+               
+                <p onclick="toggleAuthMode()" id="switch-text" class="text-center mt-8 text-purple-600 cursor-pointer">
+                    Don't have an account? Register now
+                </p>
+            </div>
+        </div>
+    </div>
+    <script>
+        // ====================== DATA (8 Products) ======================
+        let products = [
+            {
+                id: 1,
+                name: "Wireless Headphones",
+                price: 2499,
+                description: "Premium noise-cancelling over-ear headphones with 40hr battery. Crystal clear sound & ultra-comfort fit.",
+                image: "https://picsum.photos/id/1015/600/400",
+                glb: "https://modelviewer.dev/assets/ShopifyModels/Headphones.glb"
+            },
+            {
+                id: 2,
+                name: "Smart Sneakers",
+                price: 3999,
+                description: "Futuristic LED sneakers with built-in step counter. Breathable mesh & perfect for running or casual wear.",
+                image: "https://picsum.photos/id/201/600/400",
+                glb: "https://modelviewer.dev/assets/ShopifyModels/Sneaker.glb"
+            },
+            {
+                id: 3,
+                name: "Modern Chair",
+                price: 8999,
+                description: "Ergonomic designer chair with premium leather. Perfect for your home office or living room.",
+                image: "https://picsum.photos/id/1005/600/400",
+                glb: "https://modelviewer.dev/assets/ShopifyModels/Chair.glb"
+            },
+            {
+                id: 4,
+                name: "Robot Companion",
+                price: 12999,
+                description: "Interactive AI robot with expressive face. Voice controlled, dances, and tells jokes!",
+                image: "https://picsum.photos/id/1009/600/400",
+                glb: "https://modelviewer.dev/assets/ShopifyModels/RobotExpressive.glb"
+            },
+            {
+                id: 5,
+                name: "Astronaut Figurine",
+                price: 4999,
+                description: "Collectible space explorer with detailed suit and helmet. Perfect desk decor or gift.",
+                image: "https://picsum.photos/id/1016/600/400",
+                glb: "https://modelviewer.dev/assets/ShopifyModels/Astronaut.glb"
+            },
+            {
+                id: 6,
+                name: "Retro Boombox",
+                price: 3499,
+                description: "Vintage-style Bluetooth speaker with powerful bass and nostalgic design.",
+                image: "https://picsum.photos/id/133/600/400",
+                glb: "https://modelviewer.dev/assets/ShopifyModels/BoomBox.glb"
+            },
+            {
+                id: 7,
+                name: "Toy Horse",
+                price: 1299,
+                description: "Cute wooden rocking horse with smooth 3D finish. Great for kids or home decor.",
+                image: "https://picsum.photos/id/160/600/400",
+                glb: "https://modelviewer.dev/assets/ShopifyModels/Horse.glb"
+            },
+            {
+                id: 8,
+                name: "Cute Duck Lamp",
+                price: 899,
+                description: "Adorable rubber duck lamp with soft glowing light. Fun and functional decor piece.",
+                image: "https://picsum.photos/id/180/600/400",
+                glb: "https://modelviewer.dev/assets/ShopifyModels/Duck.glb"
+            }
+        ]
+        // ====================== STATE ======================
+        let cart = JSON.parse(localStorage.getItem('cart')) || []
+        let currentUser = localStorage.getItem('user') || null
+        let currentProductId = null
+        let isLoginMode = true
+        // ====================== TAILWIND INIT ======================
+        function initTailwind() {
+            tailwind.config = { content: [], theme: { extend: {} } }
+        }
+        // ====================== RENDER FUNCTIONS ======================
+        function renderProducts() {
+            const grid = document.getElementById('product-grid')
+            grid.innerHTML = ''
+           
+            products.forEach(product => {
+                const cardHTML = `
+                <div onclick="showProductDetail(${product.id})" class="product-card bg-white rounded-3xl overflow-hidden cursor-pointer">
+                    <div class="relative">
+                        <img src="${product.image}" class="w-full h-64 object-cover">
+                        <div class="absolute top-4 right-4 bg-white text-xs font-bold px-3 py-1 rounded-2xl shadow">3D</div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="font-semibold text-2xl">${product.name}</h3>
+                        <p class="text-green-600 text-3xl font-bold mt-1">₹${product.price}</p>
+                        <p class="text-gray-500 text-sm mt-4 line-clamp-2">${product.description}</p>
+                    </div>
+                </div>`
+                grid.innerHTML += cardHTML
+            })
+        }
+        function renderCart() {
+            const container = document.getElementById('cart-items')
+            const empty = document.getElementById('cart-empty')
+           
+            if (cart.length === 0) {
+                container.innerHTML = ''
+                empty.classList.remove('hidden')
+                return
+            }
+           
+            empty.classList.add('hidden')
+           
+            let html = ''
+            let subtotal = 0
+           
+            cart.forEach((item, index) => {
+                const product = products.find(p => p.id === item.id)
+                if (!product) return
+                const itemTotal = product.price * item.qty
+                subtotal += itemTotal
+               
+                html += `
+                <div class="flex gap-6 bg-white p-6 rounded-3xl items-center">
+                    <img src="${product.image}" class="w-24 h-24 object-cover rounded-2xl">
+                    <div class="flex-1">
+                        <h4 class="font-semibold text-xl">${product.name}</h4>
+                        <p class="text-green-600">₹${product.price} × ${item.qty}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-2xl font-bold">₹${itemTotal}</p>
+                        <div class="flex gap-3 mt-4">
+                            <button onclick="changeQuantity(${index}, -1)" class="w-8 h-8 border rounded-xl flex items-center justify-center text-xl hover:bg-gray-100">-</button>
+                            <span class="w-8 text-center font-semibold">${item.qty}</span>
+                            <button onclick="changeQuantity(${index}, 1)" class="w-8 h-8 border rounded-xl flex items-center justify-center text-xl hover:bg-gray-100">+</button>
+                            <button onclick="removeFromCart(${index})" class="ml-6 text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>`
+            })
+           
+            container.innerHTML = html
+            document.getElementById('cart-subtotal').textContent = `₹${subtotal}`
+            document.getElementById('cart-total').textContent = `₹${subtotal}`
+            document.getElementById('cart-count').textContent = cart.reduce((acc, i) => acc + i.qty, 0)
+        }
+        // ====================== CART OPERATIONS ======================
+        function addToCart(id) {
+            const existing = cart.find(item => item.id === id)
+            if (existing) existing.qty++
+            else cart.push({ id: id, qty: 1 })
+           
+            localStorage.setItem('cart', JSON.stringify(cart))
+            renderCart()
+           
+            const cartIcon = document.getElementById('cart-link')
+            gsap.fromTo(cartIcon,
+                { scale: 0.6, rotation: -15 },
+                { scale: 1, rotation: 0, duration: 0.8, ease: "elastic.out(1, 0.5)" })
+           
+            showToast("✅ Added to cart with 3D preview!")
+        }
+        function addCurrentToCart() {
+            if (currentProductId) {
+                addToCart(currentProductId)
+                hideModal()
+            }
+        }
+        function removeFromCart(index) {
+            cart.splice(index, 1)
+            localStorage.setItem('cart', JSON.stringify(cart))
+            renderCart()
+        }
+        function changeQuantity(index, change) {
+            cart[index].qty += change
+            if (cart[index].qty < 1) cart[index].qty = 1
+            localStorage.setItem('cart', JSON.stringify(cart))
+            renderCart()
+        }
+        // ====================== MODALS ======================
+        function showProductDetail(id) {
+            const product = products.find(p => p.id === id)
+            if (!product) return
+           
+            currentProductId = id
+            document.getElementById('modal-name').innerHTML = product.name
+            document.getElementById('modal-price').innerHTML = `₹${product.price}`
+            document.getElementById('modal-desc').innerHTML = product.description
+           
+            const viewer = document.getElementById('detail-3d')
+            viewer.setAttribute('src', product.glb)
+           
+            const modal = document.getElementById('product-modal')
+            modal.classList.remove('hidden')
+            modal.classList.add('flex')
+           
+            gsap.fromTo("#product-modal > div",
+                { opacity: 0, y: 50 },
+                { opacity: 1, y: 0, duration: 0.6 })
+        }
+        function hideModal() {
+            const modal = document.getElementById('product-modal')
+            modal.classList.add('hidden')
+            modal.classList.remove('flex')
+            currentProductId = null
+        }
+        function showAuthModal() {
+            isLoginMode = true
+            document.getElementById('auth-title').textContent = 'Login'
+            document.getElementById('auth-submit-btn').textContent = 'Login'
+            document.getElementById('auth-name').classList.add('hidden')
+            document.getElementById('switch-text').innerHTML = `Don't have an account? <span class="underline">Register now</span>`
+            const modal = document.getElementById('auth-modal')
+            modal.classList.remove('hidden')
+            modal.classList.add('flex')
+        }
+        function hideAuthModal() {
+            const modal = document.getElementById('auth-modal')
+            modal.classList.add('hidden')
+            modal.classList.remove('flex')
+        }
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode
+            const nameField = document.getElementById('auth-name')
+            if (isLoginMode) {
+                document.getElementById('auth-title').textContent = 'Login'
+                document.getElementById('auth-submit-btn').textContent = 'Login'
+                nameField.classList.add('hidden')
+                document.getElementById('switch-text').innerHTML = `Don't have an account? <span class="underline">Register now</span>`
+            } else {
+                document.getElementById('auth-title').textContent = 'Create Account'
+                document.getElementById('auth-submit-btn').textContent = 'Register'
+                nameField.classList.remove('hidden')
+                document.getElementById('switch-text').innerHTML = `Already have an account? <span class="underline">Login</span>`
+            }
+        }
+        function handleAuth() {
+            const email = document.getElementById('auth-email').value.trim()
+            const password = document.getElementById('auth-password').value.trim()
+            if (!email || !password) return alert("Please fill all fields")
+           
+            if (!isLoginMode) {
+                const name = document.getElementById('auth-name').value.trim() || "User"
+                localStorage.setItem('user', name)
+                currentUser = name
+            } else {
+                localStorage.setItem('user', email.split('@')[0])
+                currentUser = email.split('@')[0]
+            }
+           
+            updateUserUI()
+            hideAuthModal()
+            showToast(`Welcome back, ${currentUser}! 👋`)
+        }
+        function logout() {
+            localStorage.removeItem('user')
+            currentUser = null
+            updateUserUI()
+            showToast("Logged out successfully")
+        }
+        function updateUserUI() {
+            const display = document.getElementById('username-display')
+            const loginBtn = document.getElementById('login-btn')
+            const logoutBtn = document.getElementById('logout-btn')
+           
+            if (currentUser) {
+                display.textContent = currentUser
+                display.classList.remove('hidden')
+                loginBtn.classList.add('hidden')
+                logoutBtn.classList.remove('hidden')
+            } else {
+                display.classList.add('hidden')
+                loginBtn.classList.remove('hidden')
+                logoutBtn.classList.add('hidden')
+            }
+        }
+        function showProfile() {
+            if (currentUser) alert(`👤 Logged in as: ${currentUser}\n\nYour orders are stored locally in this demo.`)
+        }
+        // ====================== CHECKOUT ======================
+        function proceedToCheckout() {
+            if (cart.length === 0) return
+            if (!currentUser) {
+                showToast("Please login first!")
+                showAuthModal()
+                return
+            }
+           
+            const orderId = "ORD-" + Math.floor(100000 + Math.random() * 900000)
+            cart = []
+            localStorage.setItem('cart', JSON.stringify(cart))
+           
+            document.getElementById('order-id').innerHTML = `Order ID: <span class="font-mono font-bold">${orderId}</span>`
+            const modal = document.getElementById('success-modal')
+            modal.classList.remove('hidden')
+            modal.classList.add('flex')
+           
+            renderCart()
+        }
+        function hideSuccessModal() {
+            const modal = document.getElementById('success-modal')
+            modal.classList.add('hidden')
+            modal.classList.remove('flex')
+        }
+        // ====================== NAVIGATION ======================
+        function navigateTo(page) {
+            document.getElementById('home-section').classList.add('hidden')
+            document.getElementById('shop-section').classList.add('hidden')
+            document.getElementById('cart-section').classList.add('hidden')
+           
+            if (page === 'home') document.getElementById('home-section').classList.remove('hidden')
+            else if (page === 'shop') {
+                document.getElementById('shop-section').classList.remove('hidden')
+                renderProducts()
+            }
+            else if (page === 'cart') {
+                document.getElementById('cart-section').classList.remove('hidden')
+                renderCart()
+            }
+           
+            gsap.fromTo(`#${page}-section`,
+                { opacity: 0, y: 30 },
+                { opacity: 1, y: 0, duration: 0.6 })
+        }
+        // ====================== TOAST ======================
+        function showToast(message) {
+            const toast = document.createElement('div')
+            toast.style.cssText = 'position:fixed; bottom:20px; right:20px; background:#111827; color:white; padding:16px 24px; border-radius:9999px; box-shadow:0 10px 15px -3px rgb(0 0 0 / 0.3); z-index:9999; display:flex; align-items:center; gap:12px;'
+            toast.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`
+            document.body.appendChild(toast)
+           
+            gsap.fromTo(toast, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4 })
+           
+            setTimeout(() => {
+                gsap.to(toast, { opacity: 0, y: 30, duration: 0.4, onComplete: () => toast.remove() })
+            }, 2800)
+        }
+        // ====================== INITIALIZE APP ======================
+        function initializeApp() {
+            initTailwind()
+            updateUserUI()
+            renderProducts()
+            renderCart()
+           
+            gsap.from("#hero-title", { opacity: 0, y: 60, duration: 1.2, ease: "power4.out" })
+           
+            console.log('%c✅ Subbu Online Cart loaded successfully! (8 products with 3D)', 'color:#a855f7; font-size:16px; font-weight:bold')
+            console.log('👉 Single HTML file – just open in browser')
+        }
+        window.onload = initializeApp
+    </script>
+</body>
+</html>
