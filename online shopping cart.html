@@ -22,17 +22,105 @@
        
         body {
             font-family: 'Inter', system_ui, sans-serif;
+            perspective: 1400px;
+            overflow-x: hidden;
         }
-       
+
+        .page-3d-wrap {
+            transform-style: preserve-3d;
+            transition: transform 0.2s ease-out;
+            will-change: transform;
+        }
+
+        .page-3d-color {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            background: radial-gradient(circle at 20% 20%, rgba(147,51,234,0.25), transparent 40%),
+                        radial-gradient(circle at 80% 60%, rgba(236,72,153,0.17), transparent 35%),
+                        linear-gradient(150deg, rgba(30,41,59,.1), rgba(255,255,255,.03));
+            transition: transform 0.2s ease-out;
+        }
+
+        .page-3d-color-active {
+            transform: scale(1.05);
+        }
+
         .product-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s;
+            transform-style: preserve-3d;
+            perspective: 1200px;
+            will-change: transform;
         }
        
         .product-card:hover {
-            transform: translateY(-8px) scale(1.03);
-            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15);
+            transform: translateY(-10px) scale(1.05) rotateX(1deg) rotateY(1deg);
+            box-shadow: 0 28px 60px -12px rgb(0 0 0 / 0.25);
         }
        
+        .product-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 1rem;
+            background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0));
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .product-card:hover::before {
+            opacity: 1;
+        }
+
+        nav {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.89);
+            border-bottom: 1px solid rgba(128, 90, 213, 0.18);
+        }
+
+        .page-3d-wrap {
+            border-radius: 1.25rem;
+        }
+
+        .hero-heading {
+            text-shadow: 0 8px 22px rgba(48, 70, 150, 0.25);
+        }
+
+        button {
+            transition: all 0.25s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 10px 22px -8px rgba(131, 58, 180, 0.55);
+        }
+
+        .hero-btn,
+        .contact-btn,
+        .checkout-btn {
+            border: 1px solid rgba(255,255,255,0.25);
+            box-shadow: 0 8px 18px -6px rgba(99, 102, 241, 0.5);
+        }
+
+        .product-card h3 {
+            color: rgb(79, 70, 229);
+        }
+
+        .product-card p {
+            color: rgb(55, 65, 81);
+        }
+
+        .bg-page-accent {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.18), transparent 48%),
+                        radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.12), transparent 50%);
+            z-index: -2;
+        }
+
         .modal {
             animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
@@ -41,22 +129,81 @@
             0% { opacity: 0; transform: scale(0.95) translateY(20px); }
             100% { opacity: 1; transform: scale(1) translateY(0); }
         }
-       
-        model-viewer {
+
+        @keyframes orbitGlow {
+            from { transform: translate(-50%, -50%) rotate(0deg); opacity: .4; }
+            to { transform: translate(-50%, -50%) rotate(360deg); opacity: .9; }
+        }
+
+        @keyframes ringPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.4; }
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
+        }
+
+        .hero-3d-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .hero-3d-overlay span {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            border-radius: 9999px;
+            border: 2px solid rgba(147, 51, 234, .42);
+            transform-origin: center;
+        }
+
+        .hero-3d-overlay .orbit-ring {
+            width: 240px;
+            height: 240px;
+            animation: orbitGlow 8s linear infinite;
+        }
+
+        .hero-3d-overlay .pulse-ring {
+            width: 180px;
+            height: 180px;
+            animation: ringPulse 2.4s ease-in-out infinite;
+            border-color: rgba(236, 72, 153, .45);
+        }
+
+        model-viewer, .hero-model-viewer {
             width: 100%;
             height: 100%;
             background: #111827;
             border-radius: 16px;
+            box-shadow: 0 20px 40px -15px rgba(0,0,0,.4);
+            transform-style: preserve-3d;
+        }
+
+        .hero-model-viewer {
+            animation: float3d 6s ease-in-out infinite;
+        }
+
+        @keyframes float3d {
+            0%, 100% { transform: translateY(0px) rotateX(0deg) rotateY(0deg); }
+            50% { transform: translateY(-8px) rotateX(2deg) rotateY(2deg); }
         }
     </style>
 </head>
 <body class="bg-gray-50">
+    <div class="bg-page-accent"></div>
+    <div class="page-3d-color" id="page-3d-color"></div>
+    <div class="page-3d-wrap" id="page-3d-wrap">
     <!-- NAVBAR -->
     <nav class="bg-white border-b sticky top-0 z-50 shadow-sm">
         <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl">🛒</div>
-                <h1 class="text-3xl font-bold tracking-tight">Subbu Online Cart</h1>
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-900 via-purple-600 to-fuchsia-500 flex items-center justify-center text-white text-lg font-black shadow-lg ring-1 ring-white/40">
+                    <span class="leading-none">SC</span>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold tracking-tight">Subbu Online Cart</h1>
+                    <p class="text-xs text-gray-500 -mt-1">Luxury shopping, premium delivery</p>
+                </div>
             </div>
             <div class="flex items-center gap-8 text-lg">
                 <a onclick="navigateTo('home')" class="cursor-pointer hover:text-purple-600 font-medium flex items-center gap-1">
@@ -92,7 +239,7 @@
     <section id="home-section" class="max-w-7xl mx-auto px-6 pt-16 pb-20">
         <div class="grid md:grid-cols-2 gap-12 items-center">
             <div>
-                <h1 id="hero-title" class="text-7xl font-bold leading-none tracking-tighter">Premium Products.<br>Real 3D Experience.</h1>
+                <h1 id="hero-title" class="text-7xl font-bold leading-none tracking-tighter">Welcome to Subbu Online Cart<br>Premium Products • Real 3D Experience</h1>
                 <p class="mt-6 text-2xl text-gray-600">Shop the future with interactive 3D models, smooth animations &amp; instant cart.</p>
                
                 <div class="mt-10 flex gap-4">
@@ -125,10 +272,13 @@
             </div>
            
             <!-- Hero 3D Preview -->
-            <div class="hidden md:block bg-gradient-to-br from-purple-100 to-pink-100 rounded-3xl p-8 h-[500px] relative">
-                <model-viewer id="hero-3d" src="https://modelviewer.dev/assets/ShopifyModels/RobotExpressive.glb"
-                              auto-rotate camera-controls shadow-intensity="1"
-                              style="width:100%; height:100%;"></model-viewer>
+            <div class="hidden md:block bg-gradient-to-br from-purple-100 to-pink-100 rounded-3xl p-8 h-[500px] relative overflow-hidden">
+                <div class="hero-3d-overlay">
+                    <span class="orbit-ring"></span>
+                    <span class="pulse-ring"></span>
+                </div>
+                <model-viewer id="hero-3d" class="hero-model-viewer" src="https://modelviewer.dev/assets/ShopifyModels/RobotExpressive.glb"
+                              auto-rotate camera-controls shadow-intensity="1"></model-viewer>
                 <div class="absolute bottom-8 left-8 bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl shadow-xl">
                     <p class="font-bold text-xl">Robot Companion</p>
                     <p class="text-purple-600">₹12,999 • Interactive 3D</p>
@@ -232,6 +382,28 @@
             </div>
         </div>
     </section>
+    <!-- CONTACT SECTION -->
+    <section id="contact-section" class="max-w-7xl mx-auto px-6 py-14 bg-gradient-to-r from-purple-50 to-pink-50 rounded-3xl mt-8">
+        <div class="grid md:grid-cols-2 gap-8 items-center">
+            <div>
+                <h2 class="text-5xl font-bold">Need Help? Get in Touch</h2>
+                <p class="mt-4 text-xl text-gray-600">We’re here to help you on every step of your shopping journey. Reach out anytime and our team responds quickly.</p>
+                <div class="mt-8 space-y-3 text-lg text-gray-800">
+                    <p><i class="fas fa-phone-alt text-purple-600 mr-3"></i> +91 98765 43210</p>
+                    <p><i class="fas fa-envelope text-purple-600 mr-3"></i> support@subbu-cart.com</p>
+                    <p><i class="fas fa-map-marker-alt text-purple-600 mr-3"></i> 12, E-commerce Street, Bangalore, India</p>
+                    <p><i class="fas fa-clock text-purple-600 mr-3"></i> Support: Mon - Sat, 9am - 9pm IST</p>
+                </div>
+            </div>
+            <div class="bg-white rounded-3xl p-8 shadow-lg border border-purple-100">
+                <h3 class="text-3xl font-semibold mb-6">Send a Message</h3>
+                <input type="text" placeholder="Your Name" class="w-full px-4 py-3 mb-4 border rounded-2xl" />
+                <input type="email" placeholder="Your Email" class="w-full px-4 py-3 mb-4 border rounded-2xl" />
+                <textarea id="contact-message" placeholder="Your Message" class="w-full px-4 py-3 mb-4 border rounded-2xl" rows="4"></textarea>
+                <button onclick="handleContactSubmit()" class="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl font-semibold hover:shadow-lg transition">Send Message</button>
+            </div>
+        </div>
+    </section>
     <!-- CHECKOUT SUCCESS MODAL -->
     <div id="success-modal" onclick="if(event.target===this) hideSuccessModal()"
          class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[200]">
@@ -239,6 +411,8 @@
             <i class="fas fa-check-circle text-8xl text-green-500 mx-auto mb-6"></i>
             <h2 class="text-4xl font-bold">Order Placed Successfully! 🎉</h2>
             <p id="order-id" class="mt-4 text-gray-600"></p>
+            <div id="order-items" class="mt-4 text-left"></div>
+            <p class="mt-4 text-gray-700 font-semibold">Total Paid: <span id="order-total">₹0</span></p>
             <p class="text-sm text-gray-500 mt-8">Thank you for shopping with <strong>Subbu Online Cart</strong>.<br>Your 3D products are on the way!</p>
            
             <button onclick="hideSuccessModal(); navigateTo('home')"
@@ -346,10 +520,44 @@
                 description: "Adorable rubber duck lamp with soft glowing light. Fun and functional decor piece.",
                 image: "https://picsum.photos/id/180/600/400",
                 glb: "https://modelviewer.dev/assets/ShopifyModels/Duck.glb"
+            },
+            {
+                id: 9,
+                name: "Futuristic VR Headset",
+                price: 7499,
+                description: "Immersive virtual experience with high-fidelity audio and adjustable lenses.",
+                image: "https://picsum.photos/id/1020/600/400",
+                glb: "https://modelviewer.dev/assets/ShopifyModels/Headset.glb"
+            },
+            {
+                id: 10,
+                name: "Smart Coffee Maker",
+                price: 5599,
+                description: "Wi-Fi enabled coffee maker with schedule and brew strength settings.",
+                image: "https://picsum.photos/id/1084/600/400",
+                glb: "https://modelviewer.dev/assets/ShopifyModels/CoffeeMachine.glb"
+            },
+            {
+                id: 11,
+                name: "Wireless Keyboard",
+                price: 2199,
+                description: "Ergonomic keyboard with RGB lighting and long battery life.",
+                image: "https://picsum.photos/id/842/600/400",
+                glb: "https://modelviewer.dev/assets/ShopifyModels/Keyboard.glb"
+            },
+            {
+                id: 12,
+                name: "AR Smart Glasses",
+                price: 13999,
+                description: "Augmented reality glasses with voice assistant and gesture control.",
+                image: "https://picsum.photos/id/1050/600/400",
+                glb: "https://modelviewer.dev/assets/ShopifyModels/Glasses.glb"
             }
         ]
         // ====================== STATE ======================
         let cart = JSON.parse(localStorage.getItem('cart')) || []
+        let orders = JSON.parse(localStorage.getItem('orders')) || []
+        let contacts = JSON.parse(localStorage.getItem('contacts')) || []
         let currentUser = localStorage.getItem('user') || null
         let currentProductId = null
         let isLoginMode = true
@@ -362,11 +570,12 @@
             const grid = document.getElementById('product-grid')
             grid.innerHTML = ''
            
+            let html = ''
             products.forEach(product => {
                 const cardHTML = `
                 <div onclick="showProductDetail(${product.id})" class="product-card bg-white rounded-3xl overflow-hidden cursor-pointer">
                     <div class="relative">
-                        <img src="${product.image}" class="w-full h-64 object-cover">
+                        <img src="${product.image}" alt="${product.name}" class="w-full h-64 object-cover">
                         <div class="absolute top-4 right-4 bg-white text-xs font-bold px-3 py-1 rounded-2xl shadow">3D</div>
                     </div>
                     <div class="p-6">
@@ -375,7 +584,26 @@
                         <p class="text-gray-500 text-sm mt-4 line-clamp-2">${product.description}</p>
                     </div>
                 </div>`
-                grid.innerHTML += cardHTML
+                html += cardHTML
+            })
+            grid.innerHTML = html
+            attach3DTiltEffects()
+        }
+        function attach3DTiltEffects() {
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.addEventListener('mousemove', e => {
+                    const rect = card.getBoundingClientRect()
+                    const x = e.clientX - rect.left
+                    const y = e.clientY - rect.top
+                    const centerX = rect.width / 2
+                    const centerY = rect.height / 2
+                    const rotateY = (x - centerX) / centerX * 7
+                    const rotateX = -(y - centerY) / centerY * 7
+                    card.style.transform = `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.03)`
+                })
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = ''
+                })
             })
         }
         function renderCart() {
@@ -401,7 +629,7 @@
                
                 html += `
                 <div class="flex gap-6 bg-white p-6 rounded-3xl items-center">
-                    <img src="${product.image}" class="w-24 h-24 object-cover rounded-2xl">
+                    <img src="${product.image}" alt="${product.name}" class="w-24 h-24 object-cover rounded-2xl">
                     <div class="flex-1">
                         <h4 class="font-semibold text-xl">${product.name}</h4>
                         <p class="text-green-600">₹${product.price} × ${item.qty}</p>
@@ -564,16 +792,48 @@
                 showAuthModal()
                 return
             }
-           
+
+            const subtotal = cart.reduce((sum, item) => {
+                const product = products.find(p => p.id === item.id)
+                return sum + (product ? product.price * item.qty : 0)
+            }, 0)
+
             const orderId = "ORD-" + Math.floor(100000 + Math.random() * 900000)
+            const order = {
+                id: orderId,
+                user: currentUser,
+                items: cart.map(item => {
+                    const product = products.find(p => p.id === item.id)
+                    return {
+                        id: item.id,
+                        name: product ? product.name : "Unknown",
+                        price: product ? product.price : 0,
+                        qty: item.qty,
+                        total: product ? product.price * item.qty : 0
+                    }
+                }),
+                subtotal,
+                shipping: 0,
+                total: subtotal,
+                date: new Date().toISOString()
+            }
+
+            orders.push(order)
+            localStorage.setItem('orders', JSON.stringify(orders))
+
             cart = []
             localStorage.setItem('cart', JSON.stringify(cart))
-           
-            document.getElementById('order-id').innerHTML = `Order ID: <span class="font-mono font-bold">${orderId}</span>`
+
+            document.getElementById('order-id').innerHTML = `Order ID: <span class="font-mono font-bold">${orderId}</span> | Items: ${order.items.length}`
+            document.getElementById('order-items').innerHTML = order.items.map(i => `<p class="text-gray-600">${i.qty}× ${i.name} (₹${i.total})</p>`).join('')
+            document.getElementById('order-total').innerHTML = `₹${order.total}`
+
+            sendOrderEmailNotification(order)
+
             const modal = document.getElementById('success-modal')
             modal.classList.remove('hidden')
             modal.classList.add('flex')
-           
+
             renderCart()
         }
         function hideSuccessModal() {
@@ -581,18 +841,62 @@
             modal.classList.add('hidden')
             modal.classList.remove('flex')
         }
+
+        function sendOrderEmailNotification(order) {
+            const userEmail = currentUser && currentUser.includes('@') ? currentUser : `${currentUser || 'customer'}@example.com`
+            const emailSubject = encodeURIComponent(`Your Order ${order.id} is Confirmed`)
+            const emailBody = encodeURIComponent(`Hi ${currentUser || 'Customer'},\n\n` +
+                `Thank you for shopping with Subbu Online Cart.\n` +
+                `Order ID: ${order.id}\n` +
+                `Items:\n${order.items.map(i => `- ${i.qty}× ${i.name} (₹${i.total})`).join('\n')}\n` +
+                `Total: ₹${order.total}\n\n` +
+                `We are processing your order and will notify you once it ships.\n\n` +
+                `Best regards,\nSubbu Online Cart Team`)
+
+            // Simulated email notification for demo
+            console.log(`✅ Email notification prepared for ${userEmail}`)
+            console.log(`mailto:${userEmail}?subject=${emailSubject}&body=${emailBody}`)
+            showToast(`📧 Order confirmation emailed to ${userEmail} (simulation)`)
+        }
+
+        function handleContactSubmit() {
+            const nameInput = document.querySelector('#contact-section input[type="text"]')
+            const emailInput = document.querySelector('#contact-section input[type="email"]')
+            const messageInput = document.getElementById('contact-message')
+
+            const name = nameInput && nameInput.value.trim() ? nameInput.value.trim() : (currentUser || 'Guest')
+            const email = emailInput && emailInput.value.trim() ? emailInput.value.trim() : `${currentUser || 'guest'}@example.com`
+            const message = messageInput.value.trim()
+
+            if (!message) {
+                showToast('✉️ Please enter a message before sending.')
+                return
+            }
+
+            contacts.push({ name, email, message, date: new Date().toISOString() })
+            localStorage.setItem('contacts', JSON.stringify(contacts))
+            messageInput.value = ''
+
+            showToast(`📩 Message saved. One of our agents will email ${email} shortly (simulation).`)
+            console.log('Contact stored', contacts[contacts.length - 1])
+        }
+
         // ====================== NAVIGATION ======================
         function navigateTo(page) {
             document.getElementById('home-section').classList.add('hidden')
             document.getElementById('shop-section').classList.add('hidden')
             document.getElementById('cart-section').classList.add('hidden')
            
-            if (page === 'home') document.getElementById('home-section').classList.remove('hidden')
-            else if (page === 'shop') {
+            const contactSection = document.getElementById('contact-section')
+            contactSection.classList.add('hidden')
+
+            if (page === 'home') {
+                document.getElementById('home-section').classList.remove('hidden')
+                contactSection.classList.remove('hidden')
+            } else if (page === 'shop') {
                 document.getElementById('shop-section').classList.remove('hidden')
                 renderProducts()
-            }
-            else if (page === 'cart') {
+            } else if (page === 'cart') {
                 document.getElementById('cart-section').classList.remove('hidden')
                 renderCart()
             }
@@ -615,14 +919,34 @@
             }, 2800)
         }
         // ====================== INITIALIZE APP ======================
+        function setup3DPageParallax() {
+            const wrapper = document.getElementById('page-3d-wrap')
+            const colorLayer = document.getElementById('page-3d-color')
+            document.body.addEventListener('mousemove', e => {
+                const xPercent = (e.clientX / window.innerWidth - 0.5) * 2
+                const yPercent = (e.clientY / window.innerHeight - 0.5) * 2
+                const rotateX = yPercent * 6
+                const rotateY = xPercent * -6
+                wrapper.style.transform = `translateZ(0) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`
+                colorLayer.style.transform = `translate(${xPercent * 18}px, ${yPercent * 18}px) rotate(${xPercent * 12}deg)`
+                colorLayer.classList.add('page-3d-color-active')
+            })
+            document.body.addEventListener('mouseleave', () => {
+                wrapper.style.transform = 'translateZ(0) rotateX(0deg) rotateY(0deg)'
+                colorLayer.style.transform = 'translate(0,0) rotate(0deg)'
+                colorLayer.classList.remove('page-3d-color-active')
+            })
+        }
+
         function initializeApp() {
             initTailwind()
             updateUserUI()
             renderProducts()
             renderCart()
+            setup3DPageParallax()
            
             gsap.from("#hero-title", { opacity: 0, y: 60, duration: 1.2, ease: "power4.out" })
-           
+            showToast('👋 Welcome to Subbu Online Cart!')
             console.log('%c✅ Subbu Online Cart loaded successfully! (8 products with 3D)', 'color:#a855f7; font-size:16px; font-weight:bold')
             console.log('👉 Single HTML file – just open in browser')
         }
