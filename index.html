@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumina Meet • Real-Time Collaboration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap');
+        
+        :root {
+            --tw-color-primary: #00d4ff;
+        }
+        
+        * {
+            font-family: 'Inter', system_ui, sans-serif;
+        }
+        
+        .video-grid {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+        
+        .video-container {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #111;
+            box-shadow: 0 10px 15px -3px rgb(0 212 255 / 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .video-container:hover {
+            transform: scale(1.02);
+            box-shadow: 0 20px 25px -5px rgb(0 212 255 / 0.2);
+        }
+        
+        .live-dot {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        
+        .whiteboard-canvas {
+            background: #f8f9fa;
+            box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.1);
+            touch-action: none;
+        }
+        
+        .control-button {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .control-button:hover:not(.opacity-50) {
+            transform: translateY(-2px);
+            background-color: #222;
+        }
+        
+        .control-button.opacity-50 {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .active-tab {
+            border-bottom: 3px solid #00d4ff;
+            color: #00d4ff;
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-white overflow-hidden">
+    <!-- AUTH MODAL -->
+    <div id="auth-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+        <div class="bg-zinc-900 rounded-3xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            <div class="px-8 pt-8 pb-6">
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-2xl flex items-center justify-center text-2xl">✦</div>
+                    <h1 class="text-3xl font-semibold tracking-tight">Subrahmanyam meet</h1>
+                </div>
+                <h2 class="text-2xl font-semibold mb-2">Join the meeting</h2>
+                <p class="text-zinc-400 mb-6">Secure • Encrypted • Real-time</p>
+                
+                <div class="space-y-6">
+                    <!-- Room ID -->
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-400 mb-2">Room ID</label>
+                        <div class="flex gap-3">
+                            <input id="room-id" type="text" value="LUM-84291" 
+                                   class="flex-1 bg-zinc-800 border border-zinc-700 focus:border-cyan-400 rounded-2xl px-5 py-4 text-lg outline-none">
+                            <button onclick="generateRoomID()" 
+                                    class="px-6 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-2xl text-cyan-400 font-medium">
+                                New
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Display Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-400 mb-2">Your name</label>
+                        <input id="display-name" type="text" value="Alex Rivera" 
+                               class="w-full bg-zinc-800 border border-zinc-700 focus:border-cyan-400 rounded-2xl px-5 py-4 text-lg outline-none">
+                    </div>
+                    
+            
+                    
+                    <!-- Sign in options -->
+                    <div class="flex gap-3">
+                        <button onclick="fakeAuth('google')" 
+                                class="flex-1 flex items-center justify-center gap-3 bg-white text-zinc-900 hover:bg-zinc-100 rounded-2xl py-4 font-semibold">
+                            <span class="text-xl">G</span>
+                            Continue with Google
+                        </button>
+                        <button onclick="fakeAuth('email')" 
+                                class="flex-1 flex items-center justify-center gap-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl py-4 font-semibold border border-zinc-700">
+                            <span class="text-xl">🐙</span>
+                            Email
+                        </button>
+                    </div>
+                    
+                    <button onclick="joinMeeting()" 
+                            class="w-full bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white font-semibold text-lg py-5 rounded-3xl transition-all shadow-lg shadow-cyan-500/30">
+                        Join Secure Meeting
+                    </button>
+                    
+                    <p class="text-center text-xs text-zinc-500 flex items-center justify-center gap-2">
+                        <span class="inline-block w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                        End-to-end encrypted • Powered by WebRTC + Socket.io
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="main-app" class="hidden h-screen flex flex-col">
+        
+        <!-- TOP NAV -->
+        <div class="h-14 bg-zinc-900 border-b border-zinc-800 px-6 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">✦</div>
+                <div>
+                    <h1 class="font-semibold text-xl tracking-tighter">Subrahmanyam meeting</h1>
+                    <p id="room-name" class="text-xs text-cyan-400 font-mono">SUBBU-84291 • Real-time Collaboration</p>
+                    <p id="host-name" class="text-xs text-green-300 font-mono">Host: Subrahmanyam</p>
+                </div>
+                <div id="meeting-status" class="ml-4 px-4 py-1 bg-zinc-800 text-cyan-400 text-xs font-medium rounded-3xl">
+                    4 participants • 00:00:00
+                </div>
+                <div id="meeting-timer" class="ml-4 px-4 py-1 bg-zinc-800 text-cyan-400 text-xs font-medium rounded-3xl">
+                    Duration: 00:00:00
+                </div>
+            </div>
+            
+            <!-- Encryption badge -->
+            <div class="flex items-center gap-2 bg-zinc-800 text-cyan-400 text-sm font-medium px-5 h-9 rounded-3xl border border-cyan-400/30">
+                <span class="text-lg">🔒</span>
+                End-to-End Encrypted
+                <span class="text-xs bg-cyan-400/10 px-2.5 py-px rounded-2xl">WebRTC + AES-256</span>
+            </div>
+            
+            <div class="flex items-center gap-6">
+                <!-- Current user -->
+                <div class="flex items-center gap-3">
+                    <div id="user-avatar" class="w-8 h-8 bg-gradient-to-br from-purple-400 to-pink-400 rounded-2xl flex items-center justify-center text-sm font-bold">AR</div>
+                    <div>
+                        <p id="user-name-display" class="text-sm font-semibold">Alex Rivera</p>
+                        <p class="text-xs text-zinc-400">Host</p>
+                    </div>
+                </div>
+                
+                <div class="h-8 w-px bg-zinc-700"></div>
+                
+                <!-- Leave button -->
+                <button onclick="leaveMeeting()" 
+                        class="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 px-6 h-10 rounded-3xl text-sm font-semibold transition-all">
+                    <span class="text-xl">⭍</span>
+                    Leave
+                </button>
+                
+                <!-- More menu -->
+                <button onclick="toggleMenu()" class="text-zinc-400 hover:text-white text-2xl">⋯</button>
+            </div>
+        </div>
+        
+        <div class="flex flex-1 overflow-hidden">
+            
+            <!-- LEFT SIDEBAR: Participants -->
+            <div class="w-72 bg-zinc-900 border-r border-zinc-800 flex flex-col">
+                <div class="px-6 pt-6 pb-4 border-b border-zinc-800">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-semibold text-lg">Participants (4)</h3>
+                        <button onclick="inviteUser()" 
+                                class="text-cyan-400 hover:text-cyan-300 text-sm font-medium flex items-center gap-1">
+                            <span class="text-xl leading-none">+</span> Invite
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="participants-list" class="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+                    <!-- Populated by JS -->
+                </div>
+                
+                <div class="p-4 border-t border-zinc-800 text-xs text-zinc-400 flex items-center justify-between">
+                    <div>Screen sharing active</div>
+                    <div class="text-emerald-400">• Live</div>
+                </div>
+            </div>
+            
+            <!-- MAIN CONTENT AREA -->
+            <div class="flex-1 flex flex-col">
+                
+                <!-- TABS -->
+                <div class="bg-zinc-900 border-b border-zinc-800 px-6 flex text-sm">
+                    <button onclick="switchTab(0)" id="tab-0"
+                            class="active-tab px-8 py-5 font-medium flex items-center gap-2">
+                        📹 Meeting
+                    </button>
+                    <button onclick="switchTab(1)" id="tab-1"
+                            class="px-8 py-5 font-medium flex items-center gap-2 hover:text-cyan-400">
+                        🖌️ Whiteboard
+                    </button>
+                    <button onclick="switchTab(2)" id="tab-2"
+                            class="px-8 py-5 font-medium flex items-center gap-2 hover:text-cyan-400">
+                        📁 Files
+                    </button>
+                </div>
+                
+                <!-- MEETING VIEW -->
+                <div id="view-0" class="flex-1 flex flex-col p-6">
+                    <div class="video-grid flex-1" id="video-grid">
+                        <!-- Video tiles populated by JS -->
+                    </div>
+                </div>
+                
+                <!-- WHITEBOARD VIEW -->
+                <div id="view-1" class="flex-1 hidden flex-col">
+                    <div class="flex-1 flex flex-col bg-white">
+                        <!-- Whiteboard toolbar -->
+                        <div class="h-14 bg-white border-b flex items-center px-6 gap-8 text-zinc-800">
+                            <div onclick="setTool('pen')" id="tool-pen" class="cursor-pointer flex items-center gap-2 font-medium text-cyan-500">
+                                ✏️ Pen
+                            </div>
+                            <div onclick="setTool('eraser')" id="tool-eraser" class="cursor-pointer flex items-center gap-2 font-medium">
+                                🧼 Eraser
+                            </div>
+                            
+                            <div class="flex-1"></div>
+                            
+                            <div class="flex items-center gap-3">
+                                <input type="color" id="color-picker" value="#00d4ff" class="w-10 h-8 bg-transparent border-0 cursor-pointer">
+                                <button onclick="changeBrushSize(4)" class="w-7 h-7 bg-black rounded-full"></button>
+                                <button onclick="changeBrushSize(8)" class="w-9 h-9 bg-black rounded-full"></button>
+                                <button onclick="changeBrushSize(14)" class="w-11 h-11 bg-black rounded-full"></button>
+                            </div>
+                            
+                            <button onclick="clearWhiteboard()" 
+                                    class="px-5 py-2 text-sm font-medium border border-zinc-300 rounded-3xl hover:bg-zinc-100">Clear board</button>
+                            
+                            <button onclick="downloadWhiteboard()" 
+                                    class="px-5 py-2 text-sm font-medium bg-cyan-400 text-black rounded-3xl">Download</button>
+                            
+                            <div class="text-xs text-zinc-400 font-mono">Synced via Socket.io • 3 collaborators drawing</div>
+                        </div>
+                        
+                        <!-- Canvas -->
+                        <canvas id="whiteboard" class="whiteboard-canvas flex-1 mx-6 my-6 rounded-3xl"></canvas>
+                    </div>
+                </div>
+                
+                <!-- FILES VIEW -->
+                <div id="view-2" class="flex-1 hidden p-6 overflow-auto">
+                    <div class="max-w-2xl mx-auto">
+                        <div onclick="triggerFileUpload()" 
+                             class="border-2 border-dashed border-cyan-400/30 hover:border-cyan-400 rounded-3xl h-56 flex flex-col items-center justify-center cursor-pointer transition-all">
+                            <div class="text-6xl mb-4">📤</div>
+                            <p class="font-semibold text-xl text-cyan-400">Drop files here or click to upload</p>
+                            <p class="text-zinc-400 text-sm mt-1">Max 500 MB • Shared instantly with everyone</p>
+                            <input type="file" id="file-input" multiple class="hidden" onchange="handleFiles(event)">
+                        </div>
+                        
+                        <div class="mt-8">
+                            <h3 class="font-semibold mb-4 flex items-center gap-2">Shared files (3)</h3>
+                            <div id="files-list" class="space-y-3">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- BOTTOM CONTROLS -->
+                <div class="h-20 bg-zinc-900 border-t border-zinc-800 flex items-center px-8 gap-4 justify-center">
+                    <button onclick="toggleMic()" id="mic-btn"
+                            class="control-button w-12 h-12 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl flex items-center justify-center">🎤</button>
+                    
+                    <button onclick="toggleVideo()" id="video-btn"
+                            class="control-button w-12 h-12 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl flex items-center justify-center">📹</button>
+                    
+                    <button onclick="startScreenShare()" 
+                            class="control-button w-12 h-12 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-3xl flex items-center justify-center">🖥️</button>
+                    
+                    <button onclick="switchTab(1)" 
+                            class="control-button px-8 h-12 bg-zinc-800 hover:bg-zinc-700 rounded-3xl text-sm font-semibold flex items-center gap-3">
+                        <span class="text-2xl">🖌️</span>
+                        Open Whiteboard
+                    </button>
+                    
+                    <button onclick="switchTab(2)" 
+                            class="control-button px-8 h-12 bg-zinc-800 hover:bg-zinc-700 rounded-3xl text-sm font-semibold flex items-center gap-3">
+                        <span class="text-2xl">📁</span>
+                        Share Files
+                    </button>
+                    
+                    <div class="flex-1"></div>
+                    
+                    <div class="flex items-center gap-2 bg-emerald-400/10 text-emerald-400 px-6 h-12 rounded-3xl text-sm font-medium">
+                        <span class="live-dot w-3 h-3 bg-emerald-400 rounded-full"></span>
+                        4 participants • 00:14:28
+                    </div>
+                    
+                    <button onclick="toggleChat()" 
+                            class="control-button px-7 h-12 bg-zinc-800 hover:bg-zinc-700 rounded-3xl text-sm font-semibold flex items-center gap-2">
+                        💬 Chat
+                    </button>
+                </div>
+            </div>
+            
+            <!-- RIGHT PANEL: Chat + Participants toggle -->
+            <div id="right-panel" class="w-80 bg-zinc-900 border-l border-zinc-800 flex flex-col">
+                
+                <!-- Chat header -->
+                <div class="px-6 py-5 border-b border-zinc-800 font-semibold flex items-center justify-between">
+                    <span>Team Chat</span>
+                    <span onclick="toggleChat()" class="cursor-pointer text-xl">✕</span>
+                </div>
+                
+                <!-- Messages -->
+                <div id="chat-messages" class="flex-1 overflow-y-auto px-6 py-4 space-y-6 text-sm">
+                    <!-- Populated by JS -->
+                </div>
+                
+                <!-- Chat input -->
+                <div class="p-4 border-t border-zinc-800">
+                    <div class="flex gap-3">
+                        <input id="chat-input" type="text" placeholder="Message everyone..." 
+                               class="flex-1 bg-zinc-800 border border-transparent focus:border-cyan-400 rounded-3xl px-6 py-4 outline-none text-sm"
+                               onkeydown="if(event.key === 'Enter') sendChatMessage()">
+                        <button onclick="sendChatMessage()" 
+                                class="bg-cyan-400 text-black w-12 h-12 rounded-3xl flex items-center justify-center text-xl">↑</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" onclick="this.classList.add('hidden')" 
+         class="hidden fixed bottom-6 right-6 bg-zinc-800 border border-cyan-400 text-cyan-400 px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-3">
+        <span id="toast-text" class="font-medium"></span>
+    </div>
+
+    <!-- Socket.IO Client -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
+    <!-- Frontend Logic -->
+    <script src="frontend.js"></script>
+
+</body>
+</html>
